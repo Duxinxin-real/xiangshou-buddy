@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>享瘦搭子</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --pink: #FF6B8A; --pink-light: #FFE0E6; --pink-dark: #E5556F;
+  --teal: #4ECDC4; --teal-light: #E0F7F5;
+  --bg: #FFF5F5; --card: #FFFFFF; --text: #2D2D3A; --text2: #8E8E9A; --text3: #B8B8C4;
+  --shadow: 0 2px 12px rgba(255,107,138,0.08);
+  --radius: 16px;
+}
+body { font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; background: var(--bg); color: var(--text); max-width: 375px; margin: 0 auto; min-height: 100vh; overflow-x: hidden; position: relative; }
+.tab-content { padding: 0 16px 32px 16px; display: none; }
+.tab-content.active { display: block; }
+
+/* ===== Top Bar ===== */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:52px 16px 12px; }
+.topbar-left { display:flex; align-items:center; gap:10px; }
+.avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--pink),var(--teal)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; font-weight:600; flex-shrink:0; }
+.avatar.sm { width:36px; height:36px; font-size:14px; }
+.avatar.lg { width:48px; height:48px; font-size:20px; }
+.greeting { font-size:17px; font-weight:600; }
+.greeting span { font-size:12px; color:var(--text2); display:block; font-weight:400; }
+.topbar-right { font-size:22px; cursor:pointer; }
+
+/* ===== Cards ===== */
+.card { background:var(--card); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.card-title { font-size:14px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.card-title .icon { font-size:16px; }
+
+/* ===== Calorie Ring ===== */
+.calorie-ring { text-align:center; padding:20px 0 8px; }
+.ring-wrap { position:relative; width:140px; height:140px; margin:0 auto; }
+.ring-wrap svg { transform:rotate(-90deg); }
+.ring-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.ring-center .num { font-size:28px; font-weight:700; color:var(--pink); }
+.ring-center .unit { font-size:11px; color:var(--text2); }
+.cal-row { display:flex; justify-content:center; gap:24px; margin-top:10px; }
+.cal-item { text-align:center; font-size:11px; color:var(--text2); }
+.cal-item .val { font-size:16px; font-weight:600; color:var(--text); display:block; }
+
+/* ===== Meal Cards ===== */
+.meal-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.meal-card { background:var(--bg); border-radius:12px; padding:12px; display:flex; align-items:center; gap:10px; cursor:pointer; transition:background .2s; }
+.meal-card:active { background:var(--pink-light); }
+.meal-icon { font-size:24px; }
+.meal-info { flex:1; }
+.meal-info .name { font-size:13px; font-weight:500; }
+.meal-info .kcal { font-size:11px; color:var(--text2); }
+.meal-add { width:28px; height:28px; border-radius:50%; background:var(--pink-light); display:flex; align-items:center; justify-content:center; color:var(--pink); font-size:16px; font-weight:600; }
+
+/* ===== Steps ===== */
+.steps-bar { background:var(--pink-light); border-radius:8px; height:10px; overflow:hidden; margin:8px 0; }
+.steps-fill { height:100%; border-radius:8px; background:linear-gradient(90deg,var(--pink),var(--teal)); transition:width .6s ease; }
+.steps-row { display:flex; justify-content:space-between; font-size:12px; color:var(--text2); }
+.steps-row .cur { color:var(--teal); font-weight:600; font-size:18px; }
+.exercise-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f5f0f0; }
+.exercise-item:last-child { border:none; }
+.exercise-item .e-icon { font-size:20px; }
+.exercise-item .e-info { flex:1; font-size:13px; }
+.exercise-item .e-cal { font-size:12px; color:var(--pink); font-weight:500; }
+
+/* ===== Weight Chart ===== */
+.weight-chart { display:flex; align-items:flex-end; gap:6px; height:60px; padding:8px 0; }
+.weight-bar { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.weight-dot { width:8px; height:8px; border-radius:50%; background:var(--pink); }
+.weight-line { width:2px; background:var(--pink-light); border-radius:2px; }
+.weight-label { font-size:9px; color:var(--text3); }
+.weight-val { font-size:10px; color:var(--text2); font-weight:500; }
+
+/* ===== Top Tab Bar ===== */
+.top-tabs { position:sticky; top:0; left:0; right:0; z-index:100; background:var(--card); padding:48px 0 0; border-bottom:1px solid #f0e8e8; }
+.top-tabs-inner { display:flex; gap:0; padding:0 16px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.top-tabs-inner::-webkit-scrollbar { display:none; }
+.top-tab { padding:10px 16px; font-size:14px; font-weight:500; color:var(--text3); white-space:nowrap; cursor:pointer; position:relative; transition:color .2s; flex-shrink:0; }
+.top-tab.active { color:var(--pink); font-weight:700; }
+.top-tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:20px; height:3px; background:var(--pink); border-radius:2px; }
+.top-tab.disabled { cursor:default; opacity:.5; }
+
+/* ===== Buddy Page ===== */
+.buddy-state { display:none; }
+.buddy-state.active { display:block; }
+
+/* Goal bar */
+.goal-bar { background:linear-gradient(135deg,var(--pink),#FF8FA8); border-radius:16px; padding:14px 16px; color:#fff; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; }
+.goal-bar::after { content:''; position:absolute; right:-15px; top:-15px; width:80px; height:80px; background:rgba(255,255,255,.08); border-radius:50%; }
+.goal-bar .gb-left { flex:1; }
+.goal-bar .gb-label { font-size:10px; opacity:.75; }
+.goal-bar .gb-val { font-size:18px; font-weight:700; margin-top:2px; }
+.goal-bar .gb-add { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; z-index:1; }
+
+/* Date + Badge combined */
+.date-badge-strip { display:flex; justify-content:space-between; margin-bottom:12px; }
+.db-col { width:40px; text-align:center; }
+.db-col .db-week { font-size:10px; color:var(--text3); }
+.db-col .db-num { font-size:14px; font-weight:600; margin-top:1px; color:var(--text); width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto; }
+.db-col.today .db-num { background:var(--pink); color:#fff; box-shadow:0 2px 8px rgba(255,107,138,.25); }
+.db-col .db-badge { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; margin:4px auto 0; }
+.db-col .db-badge.earned { background:linear-gradient(135deg,#FFD700,#FFA500); box-shadow:0 1px 4px rgba(255,165,0,.25); }
+.db-col .db-badge.locked { background:#f0eded; filter:grayscale(1); opacity:.35; }
+
+/* People display */
+.people-area { padding:4px 0 8px; }
+/* 2-person: face to face */
+.people-duo { display:flex; align-items:flex-start; justify-content:center; gap:16px; }
+.people-duo .p-user { text-align:center; width:90px; }
+.people-duo .p-user .avatar { width:56px; height:56px; font-size:22px; }
+/* Multi-person: all horizontal */
+.people-multi { text-align:center; }
+.people-row { display:flex; gap:10px; overflow-x:auto; padding:4px 0 4px 4px; -webkit-overflow-scrolling:touch; }
+.people-row::-webkit-scrollbar { display:none; }
+.people-row .p-user { min-width:72px; flex-shrink:0; }
+.people-row .p-user .avatar { width:48px; height:48px; font-size:18px; }
+.p-user { text-align:center; }
+.p-user .avatar { margin:0 auto; border:3px solid #fff; box-shadow:0 3px 12px rgba(0,0,0,.1); }
+.p-name { font-size:11px; font-weight:600; margin-top:3px; }
+.p-weight { font-size:10px; color:var(--text2); margin-top:1px; }
+.p-status { margin-top:3px; }
+.p-tag { display:inline-block; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:500; }
+.p-tag.done { background:var(--teal-light); color:var(--teal); }
+.p-tag.remind { background:var(--pink-light); color:var(--pink); cursor:pointer; }
+.p-tag.fastest { background:linear-gradient(135deg,#FFD700,#FFA500); color:#fff; font-size:9px; }
+.people-mid { display:flex; flex-direction:column; align-items:center; justify-content:center; padding-top:8px; }
+.people-mid .pm-icon { font-size:20px; }
+.people-mid .pm-day { font-size:10px; color:var(--text3); margin-top:2px; }
+.invite-link { text-align:center; margin-top:8px; }
+.invite-link span { font-size:12px; color:var(--pink); cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+
+/* Rank button */
+.rank-btn { display:flex; align-items:center; gap:10px; background:var(--card); border-radius:14px; padding:12px 16px; box-shadow:var(--shadow); cursor:pointer; margin-bottom:12px; transition:transform .15s; }
+.rank-btn:active { transform:scale(.97); }
+.rank-btn .rb-icon { font-size:22px; }
+.rank-btn .rb-info { flex:1; }
+.rank-btn .rb-title { font-size:13px; font-weight:600; }
+.rank-btn .rb-sub { font-size:11px; color:var(--text2); margin-top:1px; }
+.rank-btn .rb-arrow { font-size:16px; color:var(--text3); }
+
+/* Emoji reactions */
+.emoji-bar { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+.emoji-btn { padding:2px 8px; border-radius:10px; border:1px solid #f0e8e8; background:#fff; font-size:12px; cursor:pointer; transition:all .15s; }
+.emoji-btn:active { transform:scale(.9); }
+.emoji-btn.reacted { border-color:var(--pink); background:var(--pink-light); }
+
+/* Post bar (bottom of feed) */
+.post-bar { display:flex; gap:8px; margin-top:10px; align-items:center; }
+.post-bar input { flex:1; border:1px solid #f0e8e8; border-radius:22px; padding:10px 16px; font-size:13px; outline:none; min-height:44px; background:var(--bg); }
+.post-bar input:focus { border-color:var(--pink); background:#fff; }
+.post-bar .post-btn { width:44px; height:44px; border:none; border-radius:50%; background:linear-gradient(135deg,var(--pink),#FF8FA8); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 2px 8px rgba(255,107,138,.3); flex-shrink:0; }
+
+/* Activity feed */
+.activity-feed { margin-top:4px; }
+.act-item { display:flex; gap:10px; margin-bottom:10px; align-items:flex-start; }
+.act-item .act-av { flex-shrink:0; }
+.act-bubble { background:var(--card); border-radius:14px; padding:10px 14px; box-shadow:var(--shadow); flex:1; }
+.act-bubble .ab-name { font-size:12px; font-weight:600; }
+.act-bubble .ab-time { font-size:10px; color:var(--text3); margin-left:6px; font-weight:400; }
+.act-bubble .ab-content { font-size:13px; margin-top:4px; line-height:1.5; }
+.act-bubble .ab-tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-top:4px; }
+.act-bubble .ab-tag.food { background:#FFF3CD; color:#B8860B; }
+.act-bubble .ab-tag.exercise { background:var(--teal-light); color:var(--teal); }
+.act-bubble .ab-tag.fast { background:#E8D5F5; color:#7C3AED; }
+.act-bubble .ab-tag.weight { background:var(--pink-light); color:var(--pink); }
+.act-msg { background:var(--pink-light); border-radius:14px; padding:10px 14px; flex:1; }
+.act-msg .am-name { font-size:12px; font-weight:600; }
+.act-msg .am-text { font-size:13px; margin-top:3px; }
+.act-msg .am-time { font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* Section header */
+.section-head { display:flex; align-items:center; justify-content:space-between; margin:12px 0 8px; }
+.section-head .sh-title { font-size:14px; font-weight:600; display:flex; align-items:center; gap:5px; }
+.section-head .sh-count { font-size:11px; color:var(--text3); background:var(--bg); padding:2px 8px; border-radius:8px; }
+
+/* Feed cards */
+.feed-card { background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:10px; box-shadow:var(--shadow); transition:transform .15s; }
+.feed-card:active { transform:scale(.985); }
+.feed-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.feed-header .f-info { flex:1; }
+.feed-header .f-name { font-size:13px; font-weight:600; }
+.feed-header .f-time { font-size:11px; color:var(--text3); }
+.feed-title { font-size:15px; font-weight:600; margin-bottom:8px; }
+.feed-nutrients { display:flex; gap:0; background:var(--bg); border-radius:10px; padding:8px 0; }
+.feed-nutrients .fn-item { flex:1; text-align:center; position:relative; }
+.feed-nutrients .fn-item:not(:last-child)::after { content:''; position:absolute; right:0; top:20%; height:60%; width:1px; background:#f0e8e8; }
+.feed-nutrients .fn-item .fn-label { font-size:10px; color:var(--text3); }
+.feed-nutrients .fn-item .fn-val { font-size:15px; font-weight:700; margin-top:2px; }
+.fn-cal { color:var(--text); }
+.fn-pro { color:#EF4444; }
+.fn-carb { color:#F59E0B; }
+.fn-fat { color:#8B5CF6; }
+.feed-actions { display:flex; justify-content:space-around; margin-top:10px; padding-top:8px; border-top:1px solid #f5f0f0; }
+.feed-actions button { background:none; border:none; font-size:13px; color:var(--text2); cursor:pointer; display:flex; align-items:center; gap:4px; padding:6px 12px; border-radius:10px; min-height:32px; transition:background .15s; }
+.feed-actions button:active { background:var(--bg); }
+
+/* Weight status card */
+.weight-status { display:flex; align-items:center; gap:10px; padding:4px 0; }
+.weight-status .ws-tag { font-size:11px; padding:3px 8px; border-radius:8px; font-weight:500; }
+.weight-status .ws-tag.done { background:var(--teal-light); color:var(--teal); }
+.weight-status .ws-tag.pending { background:#FFF3CD; color:#B8860B; }
+.weight-status .ws-info { font-size:12px; color:var(--text2); }
+
+/* Nudge banner */
+.nudge-banner { background:var(--card); border-radius:14px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); cursor:pointer; transition:all .2s; }
+.nudge-banner:active { transform:scale(.98); }
+.nudge-banner .nb-dot { width:8px; height:8px; border-radius:50%; background:var(--pink); flex-shrink:0; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.nudge-banner .nb-text { flex:1; font-size:12px; color:var(--text2); }
+.nudge-banner .nb-text strong { color:var(--text); }
+.nudge-banner .nb-action { font-size:12px; color:var(--pink); font-weight:600; white-space:nowrap; background:var(--pink-light); padding:4px 10px; border-radius:8px; }
+
+/* Team list items */
+.team-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f8f2f2; cursor:pointer; }
+.team-item:last-child { border:none; }
+.team-item:active { opacity:.7; }
+.team-item .ti-rank { width:24px; font-size:14px; text-align:center; }
+.team-item .ti-info { flex:1; }
+.team-item .ti-name { font-size:13px; font-weight:600; }
+.team-item .ti-meta { font-size:10px; color:var(--text3); margin-top:1px; }
+.team-item .ti-join { font-size:11px; color:#fff; font-weight:600; background:var(--teal); padding:4px 12px; border-radius:8px; }
+
+/* Message board */
+.msg-list { max-height:180px; overflow-y:auto; margin-bottom:8px; }
+.msg-item { display:flex; gap:8px; margin-bottom:12px; align-items:flex-start; }
+.msg-item .msg-content { max-width:220px; }
+.msg-item .msg-bubble { background:var(--bg); border-radius:14px 14px 14px 4px; padding:10px 14px; font-size:13px; line-height:1.5; }
+.msg-item .msg-time { font-size:10px; color:var(--text3); margin-top:3px; }
+.msg-item.me { flex-direction:row-reverse; }
+.msg-item.me .msg-bubble { background:var(--pink-light); border-radius:14px 14px 4px 14px; }
+.msg-item.me .msg-time { text-align:right; }
+.msg-input-row { display:flex; gap:8px; }
+.msg-input-row input { flex:1; border:1px solid #f0e8e8; border-radius:22px; padding:10px 16px; font-size:13px; outline:none; min-height:44px; background:var(--bg); }
+.msg-input-row input:focus { border-color:var(--pink); background:#fff; }
+.msg-send-btn { width:44px; height:44px; border:none; border-radius:50%; background:linear-gradient(135deg,var(--pink),#FF8FA8); color:#fff; font-size:18px; cursor:pointer; transition:transform .15s; box-shadow:0 2px 8px rgba(255,107,138,.3); }
+.msg-send-btn:active { transform:scale(.9); }
+
+/* ===== No Buddy State ===== */
+.solo-hero { text-align:center; padding:16px 0 4px; position:relative; }
+.solo-hero .hero-blob { width:180px; height:180px; margin:0 auto; background:linear-gradient(135deg,#FFD6A5,#FFAB76); border-radius:42% 58% 55% 45% / 56% 44% 56% 44%; display:flex; align-items:center; justify-content:center; font-size:90px; animation:blob 6s ease-in-out infinite; }
+@keyframes blob { 0%,100%{border-radius:42% 58% 55% 45%/56% 44% 56% 44%} 50%{border-radius:55% 45% 42% 58%/44% 56% 44% 56%} }
+.solo-hero .hero-title { font-size:22px; font-weight:700; margin:14px 0 4px; }
+.solo-hero .hero-sub { font-size:13px; color:var(--text2); line-height:1.6; }
+.solo-btns { display:flex; gap:12px; margin:16px 0; }
+.solo-btns button { flex:1; padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer; min-height:48px; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.solo-btns button:active { transform:scale(.96); }
+.solo-btns .btn-share { background:linear-gradient(135deg,var(--pink),#FF8FA8); color:#fff; }
+.solo-btns .btn-match { background:linear-gradient(135deg,var(--teal),#6EE7B7); color:#fff; }
+
+/* Preference panel */
+.pref-overlay { display:none; position:fixed; top:0; left:50%; transform:translateX(-50%); width:375px; height:100vh; background:rgba(0,0,0,.4); z-index:300; }
+.pref-overlay.show { display:block; }
+.pref-panel { position:absolute; bottom:0; left:0; right:0; background:#fff; border-radius:24px 24px 0 0; padding:20px 20px 36px; transform:translateY(100%); transition:transform .35s cubic-bezier(.4,0,.2,1); }
+.pref-overlay.show .pref-panel { transform:translateY(0); }
+.pref-handle { width:36px; height:4px; background:#ddd; border-radius:2px; margin:0 auto 16px; }
+.pref-title { font-size:17px; font-weight:700; text-align:center; margin-bottom:16px; }
+.pref-section { margin-bottom:16px; }
+.pref-label { font-size:13px; font-weight:600; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+.pref-chips { display:flex; gap:8px; flex-wrap:wrap; }
+.pref-chip { padding:8px 16px; border-radius:20px; border:1.5px solid #eee; font-size:13px; cursor:pointer; transition:all .2s; background:#fff; color:var(--text2); min-height:36px; display:flex; align-items:center; gap:4px; }
+.pref-chip.selected { border-color:var(--pink); background:var(--pink-light); color:var(--pink); font-weight:600; }
+.pref-chip:active { transform:scale(.95); }
+.pref-goal-row { display:flex; align-items:center; gap:8px; }
+.pref-goal-row input { width:80px; padding:8px 12px; border:1.5px solid #eee; border-radius:12px; font-size:15px; font-weight:600; text-align:center; outline:none; color:var(--text); }
+.pref-goal-row input:focus { border-color:var(--pink); }
+.pref-goal-row span { font-size:13px; color:var(--text2); }
+.pref-confirm { width:100%; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:600; color:#fff; cursor:pointer; margin-top:8px; min-height:48px; transition:opacity .2s; }
+.pref-confirm:active { opacity:.8; }
+.pref-confirm.share { background:linear-gradient(135deg,var(--pink),#FF8FA8); }
+.pref-confirm.match { background:linear-gradient(135deg,var(--teal),#6EE7B7); }
+
+/* Matching status */
+.matching-bar { background:linear-gradient(135deg,var(--teal-light),#D1FAE5); border-radius:14px; padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; }
+.matching-bar .mb-anim { width:36px; height:36px; border-radius:50%; border:3px solid var(--teal); border-top-color:transparent; animation:spin 1s linear infinite; flex-shrink:0; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.matching-bar .mb-info { flex:1; }
+.matching-bar .mb-title { font-size:13px; font-weight:600; color:var(--teal); }
+.matching-bar .mb-sub { font-size:11px; color:var(--text2); margin-top:2px; }
+.matching-bar .mb-cancel { font-size:11px; color:var(--text3); cursor:pointer; text-decoration:underline; white-space:nowrap; }
+
+/* Invite card */
+.invite-card { background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:10px; box-shadow:var(--shadow); border-left:3px solid var(--pink); }
+.invite-card .ic-badge { font-size:11px; color:var(--pink); font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:4px; }
+.invite-card .ic-body { display:flex; align-items:center; gap:12px; }
+.invite-card .ic-info { flex:1; }
+.invite-card .ic-name { font-size:14px; font-weight:600; }
+.invite-card .ic-meta { font-size:11px; color:var(--text2); margin-top:2px; line-height:1.5; }
+.invite-card .ic-tags { display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; }
+.invite-card .ic-btns { display:flex; gap:6px; margin-top:10px; }
+.invite-card .ic-btns button { flex:1; padding:8px; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; min-height:36px; transition:all .15s; }
+.invite-card .ic-btns button:active { transform:scale(.96); }
+.invite-card .btn-accept { background:linear-gradient(135deg,var(--pink),#FF8FA8); color:#fff; }
+.invite-card .btn-decline { background:var(--bg); color:var(--text3); }
+
+/* Recommend card */
+.rec-card { background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:10px; box-shadow:var(--shadow); }
+.rec-card .rc-body { display:flex; align-items:center; gap:12px; }
+.rec-card .rc-info { flex:1; }
+.rec-card .rc-name { font-size:14px; font-weight:600; }
+.rec-card .rc-meta { font-size:11px; color:var(--text2); margin-top:2px; line-height:1.5; }
+.rec-card .rc-tags { display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; }
+.rec-card .rc-invite { padding:8px 16px; border:none; border-radius:10px; background:linear-gradient(135deg,var(--teal),#6EE7B7); color:#fff; font-size:12px; font-weight:600; cursor:pointer; min-height:36px; white-space:nowrap; transition:all .15s; }
+.rec-card .rc-invite:active { transform:scale(.95); }
+.rec-card .rc-invite.sent { background:var(--bg); color:var(--text3); pointer-events:none; }
+
+.section-head { display:flex; align-items:center; justify-content:space-between; margin:14px 0 8px; }
+.section-head .sh-title { font-size:14px; font-weight:600; display:flex; align-items:center; gap:5px; }
+.section-head .sh-count { font-size:11px; color:var(--text3); background:var(--bg); padding:2px 8px; border-radius:8px; }
+
+.scroll-row { display:flex; gap:12px; overflow-x:auto; padding:4px 0 8px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; }
+.scroll-row::-webkit-scrollbar { display:none; }
+
+.user-card { min-width:150px; background:var(--card); border-radius:14px; padding:14px; box-shadow:var(--shadow); text-align:center; scroll-snap-align:start; cursor:pointer; transition:transform .2s; }
+.user-card:active { transform:scale(.97); }
+.user-card .uc-name { font-size:13px; font-weight:600; margin:6px 0 2px; }
+.user-card .uc-info { font-size:11px; color:var(--text2); line-height:1.6; }
+.user-card .uc-stats { display:flex; gap:6px; justify-content:center; margin-top:6px; }
+.badge { display:inline-block; font-size:10px; padding:2px 6px; border-radius:6px; margin:2px; }
+.badge.pink { background:var(--pink-light); color:var(--pink); }
+.badge.teal { background:var(--teal-light); color:var(--teal); }
+.badge.gold { background:#FFF8DC; color:#D4A017; }
+
+/* Popup overlay */
+.popup-overlay { display:none; position:fixed; top:0; left:50%; transform:translateX(-50%); width:375px; height:100vh; background:rgba(0,0,0,.45); z-index:400; align-items:center; justify-content:center; }
+.popup-overlay.show { display:flex; }
+.popup-box { background:#fff; border-radius:24px; padding:28px 24px; width:300px; text-align:center; animation:popIn .3s ease; }
+@keyframes popIn { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+.popup-box .pop-icon { font-size:56px; margin-bottom:12px; }
+.popup-box .pop-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+.popup-box .pop-sub { font-size:13px; color:var(--text2); line-height:1.5; margin-bottom:16px; }
+.popup-box .pop-btn { width:100%; padding:12px; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; min-height:44px; transition:opacity .2s; }
+.popup-box .pop-btn:active { opacity:.8; }
+.popup-box .pop-btn.pink { background:linear-gradient(135deg,var(--pink),#FF8FA8); color:#fff; }
+.popup-box .pop-btn.teal { background:linear-gradient(135deg,var(--teal),#6EE7B7); color:#fff; }
+.popup-box .pop-btn.ghost { background:none; color:var(--text3); font-size:13px; margin-top:8px; }
+</style>
+</head>
+<body>
+<!-- ===== Top Tab Bar ===== -->
+<div class="top-tabs">
+  <div class="top-tabs-inner">
+    <div class="top-tab active" onclick="switchTab('record')">首页</div>
+    <div class="top-tab" onclick="switchTab('buddy')">搭子</div>
+    <div class="top-tab disabled">身体</div>
+    <div class="top-tab disabled">饮食</div>
+    <div class="top-tab disabled">运动</div>
+  </div>
+</div>
+
+<!-- ===== Tab 1: 首页 ===== -->
+<div id="tab-record" class="tab-content active">
+  <!-- Greeting -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="avatar">小</div>
+      <div class="greeting">早上好，小美<span>4月9日 星期三</span></div>
+    </div>
+    <div style="font-size:22px;cursor:pointer">⚙️</div>
+  </div>
+  <!-- Calorie Ring -->
+  <div class="card calorie-ring">
+    <div class="ring-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="58" fill="none" stroke="#FFE0E6" stroke-width="10"/>
+        <circle cx="70" cy="70" r="58" fill="none" stroke="url(#grad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="72.9"/>
+        <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B8A"/><stop offset="100%" stop-color="#4ECDC4"/></linearGradient></defs>
+      </svg>
+      <div class="ring-center"><div class="num">1200</div><div class="unit">/ 1500 kcal</div></div>
+    </div>
+    <div class="cal-row">
+      <div class="cal-item"><span class="val">1200</span>已摄入</div>
+      <div class="cal-item"><span class="val">300</span>剩余</div>
+      <div class="cal-item"><span class="val">280</span>已消耗</div>
+    </div>
+  </div>
+
+  <!-- Meals -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🍽️</span> 饮食记录</div>
+    <div class="meal-grid">
+      <div class="meal-card"><div class="meal-icon">🌅</div><div class="meal-info"><div class="name">早餐</div><div class="kcal">320 kcal</div></div><div class="meal-add">+</div></div>
+      <div class="meal-card"><div class="meal-icon">☀️</div><div class="meal-info"><div class="name">午餐</div><div class="kcal">520 kcal</div></div><div class="meal-add">+</div></div>
+      <div class="meal-card"><div class="meal-icon">🌙</div><div class="meal-info"><div class="name">晚餐</div><div class="kcal">360 kcal</div></div><div class="meal-add">+</div></div>
+      <div class="meal-card"><div class="meal-icon">🍪</div><div class="meal-info"><div class="name">加餐</div><div class="kcal">0 kcal</div></div><div class="meal-add">+</div></div>
+    </div>
+  </div>
+
+  <!-- Exercise -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🏃</span> 运动记录</div>
+    <div class="steps-row"><span>今日步数</span><span class="cur">6,800</span></div>
+    <div class="steps-bar"><div class="steps-fill" style="width:68%"></div></div>
+    <div class="steps-row"><span></span><span>目标 10,000 步</span></div>
+    <div style="margin-top:10px">
+      <div class="exercise-item"><span class="e-icon">🚶</span><span class="e-info">快走 30分钟</span><span class="e-cal">-150 kcal</span></div>
+      <div class="exercise-item"><span class="e-icon">🧘</span><span class="e-info">瑜伽 20分钟</span><span class="e-cal">-80 kcal</span></div>
+      <div class="exercise-item" style="justify-content:center;color:var(--pink);cursor:pointer;border:none;font-size:13px;padding:10px 0">+ 添加运动</div>
+    </div>
+  </div>
+
+  <!-- Weight Trend -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📉</span> 体重趋势（近7天）</div>
+    <div class="weight-chart">
+      <div class="weight-bar"><div class="weight-val">63.5</div><div class="weight-line" style="height:40px"></div><div class="weight-dot"></div><div class="weight-label">4/2</div></div>
+      <div class="weight-bar"><div class="weight-val">63.2</div><div class="weight-line" style="height:36px"></div><div class="weight-dot"></div><div class="weight-label">4/3</div></div>
+      <div class="weight-bar"><div class="weight-val">63.0</div><div class="weight-line" style="height:32px"></div><div class="weight-dot"></div><div class="weight-label">4/4</div></div>
+      <div class="weight-bar"><div class="weight-val">62.8</div><div class="weight-line" style="height:28px"></div><div class="weight-dot"></div><div class="weight-label">4/5</div></div>
+      <div class="weight-bar"><div class="weight-val">63.1</div><div class="weight-line" style="height:34px"></div><div class="weight-dot"></div><div class="weight-label">4/6</div></div>
+      <div class="weight-bar"><div class="weight-val">62.6</div><div class="weight-line" style="height:24px"></div><div class="weight-dot"></div><div class="weight-label">4/7</div></div>
+      <div class="weight-bar"><div class="weight-val" style="color:var(--teal);font-weight:700">62.3</div><div class="weight-line" style="height:18px;background:var(--teal-light)"></div><div class="weight-dot" style="background:var(--teal)"></div><div class="weight-label" style="color:var(--pink);font-weight:600">今天</div></div>
+    </div>
+  </div>
+</div>
+<!-- ===== Tab 2: 搭子 ===== -->
+<div id="tab-buddy" class="tab-content">
+
+  <!-- ===== State A: 已有搭子 (2人) ===== -->
+  <div id="buddy-paired" class="buddy-state active">
+
+    <!-- Goal Bar -->
+    <div class="goal-bar">
+      <div class="gb-left">
+        <div class="gb-label">🎯 瘦身目标</div>
+        <div class="gb-val">55 kg</div>
+      </div>
+      <div class="gb-add" title="添加目标" onclick="alert('编辑瘦身目标')">✏️</div>
+    </div>
+
+    <!-- Date + Badge Combined -->
+    <div class="date-badge-strip">
+      <div class="db-col"><div class="db-week">四</div><div class="db-num">3</div><div class="db-badge earned">🔥</div></div>
+      <div class="db-col"><div class="db-week">五</div><div class="db-num">4</div><div class="db-badge earned">🥗</div></div>
+      <div class="db-col"><div class="db-week">六</div><div class="db-num">5</div><div class="db-badge earned">🏃</div></div>
+      <div class="db-col"><div class="db-week">日</div><div class="db-num">6</div><div class="db-badge earned">💪</div></div>
+      <div class="db-col"><div class="db-week">一</div><div class="db-num">7</div><div class="db-badge earned">⭐</div></div>
+      <div class="db-col"><div class="db-week">二</div><div class="db-num">8</div><div class="db-badge locked">🎯</div></div>
+      <div class="db-col today"><div class="db-week">三</div><div class="db-num">9</div><div class="db-badge locked">🏆</div></div>
+    </div>
+
+    <!-- People: 2人对立 -->
+    <div class="people-area">
+      <div class="people-duo">
+        <div class="p-user">
+          <div class="avatar" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8)">小</div>
+          <div class="p-name">小美</div>
+          <div class="p-weight">62.3 kg</div>
+          <div class="p-status"><span class="p-tag done">✅ 已记录</span></div>
+        </div>
+        <div class="people-mid">
+          <div class="pm-icon">🤝</div>
+          <div class="pm-day">Day 12</div>
+          <div class="p-tag fastest" style="margin-top:6px">🚀 小美最快</div>
+        </div>
+        <div class="p-user">
+          <div class="avatar" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div>
+          <div class="p-name">糖糖</div>
+          <div class="p-weight">64.1 kg</div>
+          <div class="p-status"><span class="p-tag remind" onclick="alert('已提醒糖糖打卡！')">👋 提醒</span></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <span style="font-size:12px;color:var(--pink);cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="document.getElementById('invitePopup').classList.add('show')">＋ 邀请好友加入</span>
+      </div>
+    </div>
+
+    <!-- Rank Button -->
+    <div class="rank-btn" onclick="document.getElementById('checkinPopup').classList.add('show')">
+      <div class="rb-icon">🏆</div>
+      <div class="rb-info">
+        <div class="rb-title">连胜排行榜</div>
+        <div class="rb-sub">小组排名 🥇 第1名 · 连续12天</div>
+      </div>
+      <div class="rb-arrow">›</div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="section-head">
+      <div class="sh-title">📋 今日动态</div>
+    </div>
+
+    <div class="activity-feed">
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8)">小</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">小美 <span class="ab-time">12:30</span></div>
+          <div class="ab-content">记录了午餐 · 鸡胸肉沙拉</div>
+          <span class="ab-tag food">🔥 当前摄入 820 kcal</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn reacted" onclick="toggleEmoji(this)">👍 1</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">💪</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">🔥</span>
+          </div>
+        </div>
+      </div>
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8)">小</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">小美 <span class="ab-time">11:00</span></div>
+          <div class="ab-content">运动步数达标 🎉</div>
+          <span class="ab-tag exercise">🏃 6,800 步</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn reacted" onclick="toggleEmoji(this)">🔥 2</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">💪</span>
+          </div>
+        </div>
+      </div>
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">糖糖 <span class="ab-time">08:15</span></div>
+          <div class="ab-content">记录了早餐 · 全麦吐司+牛奶</div>
+          <span class="ab-tag food">🔥 当前摄入 280 kcal</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn" onclick="toggleEmoji(this)">👍</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">🥗</span>
+          </div>
+        </div>
+      </div>
+      <!-- 留言 -->
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div></div>
+        <div class="act-msg">
+          <div class="am-name">糖糖</div>
+          <div class="am-text">今天吃了沙拉！终于忍住没点奶茶😤</div>
+          <div class="am-time">10:32</div>
+          <div class="emoji-bar"><span class="emoji-btn reacted" onclick="toggleEmoji(this)">❤️ 1</span><span class="emoji-btn" onclick="toggleEmoji(this)">👍</span></div>
+        </div>
+      </div>
+      <div class="act-item" style="flex-direction:row-reverse">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8)">小</div></div>
+        <div class="act-msg" style="background:var(--card);box-shadow:var(--shadow)">
+          <div class="am-name">小美</div>
+          <div class="am-text">太棒了！我刚跑完3公里💪</div>
+          <div class="am-time">11:05</div>
+          <div class="emoji-bar"><span class="emoji-btn" onclick="toggleEmoji(this)">👍</span><span class="emoji-btn" onclick="toggleEmoji(this)">🔥</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post Bar (bottom) -->
+    <div class="post-bar">
+      <input type="text" placeholder="发布动态...">
+      <button class="post-btn">↑</button>
+    </div>
+  </div>
+
+  <!-- ===== State A2: 已有搭子 (多人) ===== -->
+  <div id="buddy-paired-trio" class="buddy-state">
+
+    <!-- Goal Bar -->
+    <div class="goal-bar">
+      <div class="gb-left">
+        <div class="gb-label">🎯 瘦身目标</div>
+        <div class="gb-val">55 kg</div>
+      </div>
+      <div class="gb-add" title="添加目标" onclick="alert('编辑瘦身目标')">✏️</div>
+    </div>
+
+    <!-- Date + Badge Combined -->
+    <div class="date-badge-strip">
+      <div class="db-col"><div class="db-week">四</div><div class="db-num">3</div><div class="db-badge earned">🔥</div></div>
+      <div class="db-col"><div class="db-week">五</div><div class="db-num">4</div><div class="db-badge earned">🥗</div></div>
+      <div class="db-col"><div class="db-week">六</div><div class="db-num">5</div><div class="db-badge earned">🏃</div></div>
+      <div class="db-col"><div class="db-week">日</div><div class="db-num">6</div><div class="db-badge earned">💪</div></div>
+      <div class="db-col"><div class="db-week">一</div><div class="db-num">7</div><div class="db-badge locked">⭐</div></div>
+      <div class="db-col"><div class="db-week">二</div><div class="db-num">8</div><div class="db-badge locked">🎯</div></div>
+      <div class="db-col today"><div class="db-week">三</div><div class="db-num">9</div><div class="db-badge locked">🏆</div></div>
+    </div>
+
+    <!-- People: Multi-person (MVP + row) -->
+    <div class="people-area">
+      <div class="people-multi">
+        <div class="people-row">
+          <div class="p-user">
+            <div class="avatar" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8);border-color:#FFD700;box-shadow:0 3px 12px rgba(255,215,0,.25)">小</div>
+            <div class="p-name">小美 🚀</div>
+            <div class="p-weight">62.3 kg</div>
+            <div class="p-status"><span class="p-tag done">✅ 已记录</span></div>
+          </div>
+          <div class="p-user">
+            <div class="avatar" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div>
+            <div class="p-name">糖糖</div>
+            <div class="p-weight">64.1 kg</div>
+            <div class="p-status"><span class="p-tag remind" onclick="alert('已提醒！')">👋 提醒</span></div>
+          </div>
+          <div class="p-user">
+            <div class="avatar" style="background:linear-gradient(135deg,#A78BFA,#7C3AED)">瑶</div>
+            <div class="p-name">小瑶</div>
+            <div class="p-weight">58.0 kg</div>
+            <div class="p-status"><span class="p-tag done">✅ 已记录</span></div>
+          </div>
+          <div class="p-user">
+            <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">萌</div>
+            <div class="p-name">萌萌</div>
+            <div class="p-weight">52.5 kg</div>
+            <div class="p-status"><span class="p-tag done">✅ 已记录</span></div>
+          </div>
+          <div class="p-user">
+            <div class="avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">林</div>
+            <div class="p-name">小林</div>
+            <div class="p-weight">67.0 kg</div>
+            <div class="p-status"><span class="p-tag remind" onclick="alert('已提醒！')">👋 提醒</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="invite-link">
+        <span onclick="document.getElementById('invitePopup').classList.add('show')">＋ 邀请好友加入</span>
+      </div>
+    </div>
+
+    <!-- Rank Button -->
+    <div class="rank-btn">
+      <div class="rb-icon">🏆</div>
+      <div class="rb-info">
+        <div class="rb-title">连胜排行榜</div>
+        <div class="rb-sub">小组排名 🥇 第1名 · 连续12天</div>
+      </div>
+      <div class="rb-arrow">›</div>
+    </div>
+
+    <!-- Activity Feed (多人) -->
+    <div class="section-head">
+      <div class="sh-title">📋 今日动态</div>
+    </div>
+    <div class="activity-feed">
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#A78BFA,#7C3AED)">瑶</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">小瑶 <span class="ab-time">13:00</span></div>
+          <div class="ab-content">记录了午餐 · 糙米饭+西兰花</div>
+          <span class="ab-tag food">🔥 当前摄入 650 kcal</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn reacted" onclick="toggleEmoji(this)">👍 3</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">🥗</span>
+          </div>
+        </div>
+      </div>
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">萌</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">萌萌 <span class="ab-time">12:15</span></div>
+          <div class="ab-content">运动步数达标 🎉</div>
+          <span class="ab-tag exercise">🏃 10,200 步</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn reacted" onclick="toggleEmoji(this)">🔥 4</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">💪</span>
+          </div>
+        </div>
+      </div>
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#FF6B8A,#FF8FA8)">小</div></div>
+        <div class="act-bubble">
+          <div class="ab-name">小美 <span class="ab-time">11:00</span></div>
+          <div class="ab-content">开始轻断食模式 🍃</div>
+          <span class="ab-tag fast">🌙 16:8 轻断食</span>
+          <div class="emoji-bar">
+            <span class="emoji-btn" onclick="toggleEmoji(this)">👍</span>
+            <span class="emoji-btn" onclick="toggleEmoji(this)">😮</span>
+          </div>
+        </div>
+      </div>
+      <div class="act-item">
+        <div class="act-av"><div class="avatar sm" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div></div>
+        <div class="act-msg">
+          <div class="am-name">糖糖</div>
+          <div class="am-text">五个人一起冲！今天必须全员打卡💪</div>
+          <div class="am-time">09:30</div>
+          <div class="emoji-bar"><span class="emoji-btn reacted" onclick="toggleEmoji(this)">❤️ 4</span><span class="emoji-btn" onclick="toggleEmoji(this)">🔥</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post Bar -->
+    <div class="post-bar">
+      <input type="text" placeholder="发布动态...">
+      <button class="post-btn">↑</button>
+    </div>
+  </div>
+
+  <!-- ===== State B: 没有搭子 ===== -->
+  <div id="buddy-solo" class="buddy-state">
+
+    <!-- Hero -->
+    <div class="solo-hero">
+      <div class="hero-blob">🤝</div>
+      <div class="hero-title">找搭子一起瘦</div>
+      <div class="hero-sub">让减肥路上不再孤单</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="solo-btns">
+      <button class="btn-share" onclick="openPref('share')">📤 创建小组</button>
+      <button class="btn-match" onclick="openPref('match')">🔍 帮我组队</button>
+    </div>
+
+    <!-- Matching Status (hidden by default, shown after confirm) -->
+    <div id="matchingBar" class="matching-bar" style="display:none">
+      <div class="mb-anim"></div>
+      <div class="mb-info">
+        <div class="mb-title">正在为你寻找合适的搭子...</div>
+        <div class="mb-sub">已等待 <span id="matchTimer">0</span> 秒 · 🍽️饮食+🏃运动 · 👥2人</div>
+      </div>
+      <div class="mb-cancel" onclick="cancelMatch()">取消</div>
+    </div>
+
+    <!-- Invitations -->
+    <div class="section-head">
+      <div class="sh-title">📩 收到的邀请</div>
+      <div class="sh-count">2</div>
+    </div>
+
+    <div class="invite-card">
+      <div class="ic-badge">🔔 Ta 想和你组队</div>
+      <div class="ic-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#4ECDC4,#6EE7B7)">糖</div>
+        <div class="ic-info">
+          <div class="ic-name">糖糖</div>
+          <div class="ic-meta">记录 15天 · 当前 62kg · 目标 55kg</div>
+        </div>
+      </div>
+      <div class="ic-btns">
+        <button class="btn-accept" onclick="acceptInvite(this)">接受组队</button>
+        <button class="btn-decline">婉拒</button>
+      </div>
+    </div>
+
+    <div class="invite-card">
+      <div class="ic-badge">🔔 Ta 想和你组队</div>
+      <div class="ic-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#A78BFA,#7C3AED)">阿</div>
+        <div class="ic-info">
+          <div class="ic-name">阿杰</div>
+          <div class="ic-meta">记录 8天 · 当前 73kg · 目标 65kg</div>
+        </div>
+      </div>
+      <div class="ic-btns">
+        <button class="btn-accept" onclick="acceptInvite(this)">接受组队</button>
+        <button class="btn-decline">婉拒</button>
+      </div>
+    </div>
+
+    <!-- Recommended -->
+    <div class="section-head">
+      <div class="sh-title">👋 推荐搭子</div>
+    </div>
+
+    <div class="rec-card">
+      <div class="rc-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#FF6B8A,#FBBF24)">瑶</div>
+        <div class="rc-info">
+          <div class="rc-name">小瑶</div>
+          <div class="rc-meta">记录 21天 · 当前 58kg · 目标 52kg</div>
+        </div>
+        <button class="rc-invite" onclick="sendInvite(this)">邀请组队</button>
+      </div>
+    </div>
+
+    <div class="rec-card">
+      <div class="rc-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#4ECDC4,#A78BFA)">晨</div>
+        <div class="rc-info">
+          <div class="rc-name">晨晨</div>
+          <div class="rc-meta">记录 14天 · 当前 63kg · 目标 55kg</div>
+        </div>
+        <button class="rc-invite" onclick="sendInvite(this)">邀请组队</button>
+      </div>
+    </div>
+
+    <div class="rec-card">
+      <div class="rc-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">萌</div>
+        <div class="rc-info">
+          <div class="rc-name">萌萌</div>
+          <div class="rc-meta">记录 7天 · 当前 52kg · 目标 48kg</div>
+        </div>
+        <button class="rc-invite" onclick="sendInvite(this)">邀请组队</button>
+      </div>
+    </div>
+
+    <div class="rec-card">
+      <div class="rc-body">
+        <div class="avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">林</div>
+        <div class="rc-info">
+          <div class="rc-name">小林</div>
+          <div class="rc-meta">记录 30天 · 当前 67kg · 目标 60kg</div>
+        </div>
+        <button class="rc-invite" onclick="sendInvite(this)">邀请组队</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Checkin Success Popup -->
+<div id="checkinPopup" class="popup-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="popup-box">
+    <div class="pop-icon">🎉</div>
+    <div class="pop-title">打卡成功！</div>
+    <div class="pop-sub">连续打卡 <strong style="color:var(--pink)">12天</strong><br>你比 89% 的用户更有毅力！</div>
+    <button class="pop-btn pink" onclick="this.closest('.popup-overlay').classList.remove('show')">太棒了！</button>
+    <button class="pop-btn ghost" onclick="this.closest('.popup-overlay').classList.remove('show')">分享给搭子</button>
+  </div>
+</div>
+
+<!-- Invite Popup -->
+<div id="invitePopup" class="popup-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="popup-box">
+    <div class="pop-icon">📩</div>
+    <div class="pop-title">邀请搭子</div>
+    <div class="pop-sub">分享链接给好友<br>一起开始减肥之旅</div>
+    <button class="pop-btn teal" onclick="navigator.clipboard&&navigator.clipboard.writeText('https://xs.app/invite/abc123');this.textContent='✅ 链接已复制！';setTimeout(()=>{this.textContent='📋 复制邀请链接';this.closest('.popup-overlay').classList.remove('show')},1500)">📋 复制邀请链接</button>
+    <button class="pop-btn ghost" onclick="this.closest('.popup-overlay').classList.remove('show')">取消</button>
+  </div>
+</div>
+
+<!-- Preference Panel Overlay -->
+<div id="prefOverlay" class="pref-overlay" onclick="if(event.target===this)closePref()">
+  <div class="pref-panel">
+    <div class="pref-handle"></div>
+    <div class="pref-title" id="prefTitle">设置偏好</div>
+
+    <div class="pref-section">
+      <div class="pref-label">👥 人数上限</div>
+      <div class="pref-chips" id="prefPeople">
+        <div class="pref-chip selected" onclick="selectChip(this)">2人</div>
+        <div class="pref-chip" onclick="selectChip(this)">3人</div>
+        <div class="pref-chip" onclick="selectChip(this)">4人</div>
+        <div class="pref-chip" onclick="selectChip(this)">5人+</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">2人匹配即成队，可随时加人</div>
+    </div>
+
+    <div class="pref-section">
+      <div class="pref-label">📋 打卡类型</div>
+      <div class="pref-chips" id="prefType">
+        <div class="pref-chip selected" onclick="toggleChip(this)">🍽️ 饮食</div>
+        <div class="pref-chip selected" onclick="toggleChip(this)">🏃 运动</div>
+      </div>
+    </div>
+
+    <div class="pref-section">
+      <div class="pref-label">🎯 目标体重</div>
+      <div class="pref-goal-row">
+        <input type="number" value="55" id="prefGoal">
+        <span>kg</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:8px">当前约 62kg</span>
+      </div>
+    </div>
+
+    <button class="pref-confirm" id="prefBtn" onclick="confirmPref()">确认</button>
+  </div>
+</div>
+
+<!-- State switch (demo only) -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:200">
+  <button id="stateBtn" onclick="cycleState()" style="background:var(--card);border:1px solid #eee;border-radius:20px;padding:6px 14px;font-size:11px;color:var(--text2);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+    2人搭子 ↔
+  </button>
+</div>
+
+<script>
+let buddyState = 0;
+let prefMode = '';
+let matchInterval = null;
+const bStates = ['buddy-paired','buddy-paired-trio','buddy-solo'];
+const bLabels = ['2人搭子 ↔','5人搭子 ↔','没有搭子 ↔'];
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.top-tab').forEach(el => el.classList.remove('active'));
+  if (tab === 'record') {
+    document.getElementById('tab-record').classList.add('active');
+    document.querySelectorAll('.top-tab')[0].classList.add('active');
+  } else {
+    document.getElementById('tab-buddy').classList.add('active');
+    document.querySelectorAll('.top-tab')[1].classList.add('active');
+    renderBuddyState();
+  }
+  window.scrollTo(0, 0);
+}
+
+function renderBuddyState() {
+  bStates.forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById(bStates[buddyState]).classList.add('active');
+}
+
+function cycleState() {
+  buddyState = (buddyState + 1) % 3;
+  document.getElementById('stateBtn').textContent = bLabels[buddyState];
+  renderBuddyState();
+}
+
+function nudge(el) {
+  if (el) {
+    el.querySelector('.nb-action').textContent = '已提醒 ✓';
+    el.style.background = 'var(--teal-light)';
+    setTimeout(() => {
+      el.querySelector('.nb-action').textContent = '提醒打卡';
+      el.style.background = 'var(--card)';
+    }, 2000);
+  }
+}
+
+// Preference panel
+function openPref(mode) {
+  prefMode = mode;
+  const overlay = document.getElementById('prefOverlay');
+  const title = document.getElementById('prefTitle');
+  const btn = document.getElementById('prefBtn');
+  if (mode === 'share') {
+    title.textContent = '创建小组';
+    btn.textContent = '📤 创建并分享邀请链接';
+    btn.className = 'pref-confirm share';
+  } else {
+    title.textContent = '自动匹配';
+    btn.textContent = '🔍 开始匹配';
+    btn.className = 'pref-confirm match';
+  }
+  overlay.classList.add('show');
+}
+
+function closePref() {
+  document.getElementById('prefOverlay').classList.remove('show');
+}
+
+function selectChip(el) {
+  el.parentElement.querySelectorAll('.pref-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleChip(el) {
+  el.classList.toggle('selected');
+  if (!el.parentElement.querySelector('.selected')) el.classList.add('selected');
+}
+
+function confirmPref() {
+  closePref();
+  if (prefMode === 'match') {
+    const bar = document.getElementById('matchingBar');
+    bar.style.display = 'flex';
+    let sec = 0;
+    matchInterval = setInterval(() => {
+      sec++;
+      document.getElementById('matchTimer').textContent = sec;
+    }, 1000);
+  } else {
+    alert('邀请链接已复制，快去分享给朋友吧！');
+  }
+}
+
+function cancelMatch() {
+  clearInterval(matchInterval);
+  document.getElementById('matchingBar').style.display = 'none';
+  document.getElementById('matchTimer').textContent = '0';
+}
+
+// Invite actions
+function acceptInvite(btn) {
+  const card = btn.closest('.invite-card');
+  card.style.borderLeftColor = 'var(--teal)';
+  card.querySelector('.ic-btns').innerHTML = '<div style="text-align:center;color:var(--teal);font-size:13px;font-weight:600;padding:4px 0">✅ 已接受，等待对方确认</div>';
+}
+
+function sendInvite(btn) {
+  btn.textContent = '已邀请 ✓';
+  btn.classList.add('sent');
+}
+
+function toggleEmoji(el) {
+  if (el.classList.contains('reacted')) {
+    el.classList.remove('reacted');
+    el.textContent = el.textContent.replace(/ \d+/, '');
+  } else {
+    el.classList.add('reacted');
+    const txt = el.textContent.trim();
+    const m = txt.match(/\d+/);
+    const n = m ? parseInt(m[0]) + 1 : 1;
+    el.textContent = txt.replace(/ ?\d*$/, '') + ' ' + n;
+  }
+}
+</script>
+</body>
+</html>
